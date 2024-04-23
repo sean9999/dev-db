@@ -14,19 +14,25 @@ services:
       - type: volume
         source: pg-ext
         target: /var/lib/postgresql
+      - type: bind
+        source: ./ext/scripts
+        target: /scripts
     environment:
       POSTGRES_USER: wg
       POSTGRES_PASSWORD: wg
       POSTGRES_DB: wg
   conf:
     build:
-      context: ./ext/
+      context: ./conf/
     ports:
       - "5434:5432"
     volumes:
       - type: volume
         source: pg-conf
         target: /var/lib/postgresql
+      - type: bind
+        source: ./conf/scripts
+        target: /scripts
     environment:
       POSTGRES_USER: wg
       POSTGRES_PASSWORD: wg
