@@ -4,10 +4,20 @@ name: localdb
 
 services:
   redis:
+    annotations:
+      io.wgames.role: database
+      io.wgames.name: redis
+      io.wgames.flavour: redis
+      io.wgames.project: localdb
     image: "redis"
     ports:
       - "6379:6379"
   ext:
+    annotations:
+      io.wgames.role: database
+      io.wgames.flavour: postgres
+      io.wgames.name: ext
+      io.wgames.project: localdb
     build:
       context: ./ext/
     ports:
@@ -24,6 +34,11 @@ services:
       POSTGRES_PASSWORD: wg
       POSTGRES_DB: wg
   conf:
+    annotations:
+      io.wgames.role: database
+      io.wgames.flavour: postgres
+      io.wgames.name: conf
+      io.wgames.project: localdb
     build:
       context: ./conf/
     ports:
