@@ -1,43 +1,83 @@
 #!/bin/bash
 
-#   Pull down lots of databases from pgsql-ext.stg.wgames.io
+set -euo pipefail
+IFS=$'\n\t'
+
+#   Pull down lots of databases from pgsql-ext.stg.wgames.io or similar
 #   import them into local
 #   @warning: this is a destructive operation! It drops local databases before recreating them
 
-#   You must pass in this arg and it must be of the form: postgres://username:password@my_postgres_server:5432/databasename
-
+#   You must pass in a connection string and it must be of the form: 
+#   postgres://username:password@my_postgres_server:5432/databasename
 UPSTREAM_CONNECTION_STRING="$1"
 
 DATABASES=(
-    "collections"
-    "facebook"
-    "geofence"
+    "collections collections"
+    "facebook config"
+    "geofence geofence"
     "giveaways"
-    "inbox"
-    "location_lists"
-    "missions"
-    "profile"
-    "profile_data"
-    "rewards"
+    "inbox inbox"
+    "location_lists location_lists"
+    "missions clan2 clan_missions common daily daily_missions journey2 journey_missions login rewards rewards_missions"
+    "profile profile"
+    "profile_data profile"
+    "rewards rewards trophies unanimity wchest"
     "segments"
-    "shop"
-    "trophies"
+    "shop bundle deeplinks old_shop shop wallet"
     "wdollar_portal"
 )
 
-for DB in ${DATABASES[@]}; do
+function execute_locally(){
+    #   execute psql commands against local DB
+    #   @WARNING: This is SQL injection
+    echo local psql: $@
+    PGPASSWORD=$POSTGRES_PASSWORD psql -w -h 127.0.0.1 -U $POSTGRES_USER postgres -c "$@"
+}
 
-    #  create database
-    echo "DROP DATABASE IF EXISTS $DB;" | PGPASSWORD=$POSTGRES_PASSWORD psql -w -h 127.0.0.1 -U $POSTGRES_USER postgres
-    echo "CREATE DATABASE $DB WITH ENCODING = 'UTF8';" | PGPASSWORD=$POSTGRES_PASSWORD psql -w -h 127.0.0.1 -U $POSTGRES_USER postgres
-    echo "GRANT ALL PRIVILEGES ON DATABASE $DB TO $POSTGRES_USER;" | PGPASSWORD=$POSTGRES_PASSWORD psql -w -h 127.0.0.1 -U $POSTGRES_USER postgres
+for DBLINE in ${DATABASES[@]}; do
+
+    #   extract DB and SCHEMAS
+    IFS=' ' read -r -a DARR <<< $DBLINE
+    DB=${DARR[0]}
+    SCHEMAS=("${DARR[@]:1}")
+
+    echo
+    echo DATABASE $DB
+
+    #   create database with default schema (public)
+    #   @WARNING: destructive commands
+    execute_locally "DROP DATABASE IF EXISTS $DB WITH (FORCE);"
+    execute_locally "CREATE DATABASE $DB WITH ENCODING = 'UTF8';"
+    execute_locally "GRANT ALL PRIVILEGES ON DATABASE $DB TO $POSTGRES_USER;"
     
-    #  dump upstream database
-    pg_dump --clean --create --no-owner --no-privileges --no-acl --no-security-labels \
-        -d "$UPSTREAM_CONNECTION_STRING" \
-        -f /tmp/$DB.upstream.dump.sql
+    #   dump public schema
+    pg_dump -v --schema=public \
+    --no-acl \
+    --no-owner \
+    --no-security-labels \
+    -d "$UPSTREAM_CONNECTION_STRING" \
+    -f /tmp/$DB.public.dump.sql    
     
-    #  import into local
-    PGPASSWORD=$POSTGRES_PASSWORD psql -h 127.0.0.1 -U $POSTGRES_USER $DB -f /tmp/$DB.upstream.dump.sql
+    #   import public schema
+    echo "IMPORTING SCHEMA public FROM DATABASE $DB"
+    PGPASSWORD=$POSTGRES_PASSWORD psql -h 127.0.0.1 -U $POSTGRES_USER $DB -f /tmp/$DB.public.dump.sql
+    echo
+
+    #   bespoke schemas
+    for schema in ${SCHEMAS[@]}; do
+        echo "DUMPING SCHEMA $schema IN DATABASE $DB"
+        
+        #execute_locally "CREATE SCHEMA IF NOT EXISTS $schema;"
+        pg_dump -v --schema=$schema \
+        --no-acl \
+        --no-owner \
+        --no-security-labels \
+       -d "${UPSTREAM_CONNECTION_STRING/\/postgres/\/$DB}" \
+       -f /tmp/$DB.$schema.dump.sql
+
+       echo "IMPORTING SCHEMA $schema FROM DATABASE $DB"
+       PGPASSWORD=$POSTGRES_PASSWORD psql -h 127.0.0.1 -U $POSTGRES_USER $DB -f /tmp/$DB.$schema.dump.sql
+       echo
+    done
 
 done
