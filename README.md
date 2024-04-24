@@ -1,6 +1,6 @@
 # Local DB
 
-This project is for working with local copies of Hard Rock / WGames databases:
+This project is designed to make it easy to work with local copies of Hard Rock / WGames databases. Such as:
 
 - The "ext" database
 - The "conf" database
@@ -20,6 +20,25 @@ You must have docker.
 
 You must have access to HRD database servers.
 
+We must have bash.
+
+# Basic Architecture
+
+The docker-compose.yml defines services that are exposed on stable ports on your host:
+
+- 5432 for the "ext" postgres instance
+- 5434 for the "conf" postgres instnce
+- 6379 for redis
+
+This means that those ports must be free when running `docker compose up`, and that only one instance of this docker compose project can be running at one time on one host.
+
+The "ext" and "conf" database instances are encapsulated in the "ext" and "conf" folders. Within each, the "scripts" folder is mounted to your host, so that you can modify scripts at will and manipulate files in that directory.
+
+- In the "ext"  container, `./ext/scripts`  in the repo is mounted to `/scripts` in the container.
+- In the "conf" container, `./conf/scripts` in the repo is mounted to `/scripts` in the container.
+
+The redis container is defined in `docker-compose.yml`, but does not require any special processing, so does not have a subfolder in this repo.
+
 #  Getting Started
 
 From the root of the repo, do `docker compose up`. This will create a set of empty databases. You will then need to run a series of commands to seed your local database.
@@ -28,13 +47,13 @@ From the root of the repo, do `docker compose up`. This will create a set of emp
 
 To seed this, you must have access to to an "ext" database server, which contains databases like missions, inbox, and collections. The one I use is `pgsql-ext.stg.wgames.io.`.
 
-To see this, you must have a connection string. Then you can run:
+example:
 
 ```sh
 $ seed_ext_database.sh postgres://billybob:my-special-password@pgsql-ext.stg.wgames.io:5432/postgres
 ```
 
-That will connect to the remote database, and sync down to local. The results will be available at:
+That will connect to the remote database, and sync down to local. You will then have a mirror at:
 
 ```sh
 $ psql postgres://wg:wg@localhost:5432/wg
@@ -44,9 +63,9 @@ $ psql postgres://wg:wg@localhost:5432/wg
 
 This one uses dumps, which are located in `./conf/scripts/*.sql`.
 
-It's up to you to create new dumps and place them in that folder.
+It's up to you to create new dumps and place them in that folder. Although there are some there for convenience, they may be old by the time you read this.
 
-In my case, I use `pgcs-config.prod.wginfra.net`, which looks a lot like a production database server, but I make sure to connect to the `staging` database, and only operate on that.
+In my case, I use `pgcs-config.prod.wginfra.net`. I make sure to connect to the `staging` database, and only operate on that. I do not wish to touch production data.
 
 In my case, I get a handful of tables in 3 different schemas: public, go, and geofence.
 
@@ -62,8 +81,22 @@ After that, it will be accessible at:
 $ psql postgres://wg:wg@localhost:5434/wg
 ```
 
-Note the subtle difference: "ext" uses the standard `5432` port. This one uses `5434`.
+Note the subtle difference: "ext" uses the standard `5432` port. "conf" uses `5434`.
 
 ## redis
 
 so far, no pre-seeding is done with redis. It's good to go.
+
+# Going Forward
+
+All this seeding is only required at the beginning. Data is persistent. To spin up or down your set of databases:
+
+```sh
+$ docker compose up # bring the databases up
+$ docker compose down # turn them off 
+```
+Once you have these local databases up, and they are listed in `config.json`, you should be able to bring any service up by doing:
+
+```sh
+$ go run .
+```
