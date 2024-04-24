@@ -1,5 +1,7 @@
 ---
 
+name: localdb
+
 services:
   redis:
     image: "redis"

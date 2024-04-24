@@ -16,7 +16,6 @@ DATABASES=(
     "inbox"
     "location_lists"
     "missions"
-    "postgres"
     "profile"
     "profile_data"
     "rewards"
