@@ -100,3 +100,13 @@ Once you have these local databases up, and they are listed in `config.json`, yo
 ```sh
 $ go run .
 ```
+
+# Test connectivity
+
+Simply run this:
+
+```sh
+$ ./summary.sh
+```
+
+It connects to each database and returns summary information. If there is a connection error, it will be shown here.
