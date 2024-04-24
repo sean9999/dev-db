@@ -1,11 +1,5 @@
 # ext db
 
-run it with `run.sh`.
+This is one of two database servers for W-Games. This one is known as "ext". I think maybe the "ext" refers to "external", or maybe "extension"? 🤷
 
-full with data like this:
-
-`pull_down.sh postgres://username:password@my_postgres_server:5432/databasename`
-
-The connection string you pass in will be used to connect to an "ext" database and populate certain databases.
-
-It omits databases not in use, and databases owned by superuser.
+Anyway, the other one is known as "conf", which is mostly concerned with configuration data.

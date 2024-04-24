@@ -18,19 +18,19 @@ $ go run .
 
 You must have docker.
 
-You must have access to HRD database servers.
+You _should_ have access to HRD database servers.
 
-We must have bash.
+You should have bash. zsh might work too.
 
 # Basic Architecture
 
-The docker-compose.yml defines services that are exposed on stable ports on your host:
+The docker-compose.yml defines services that are exposed on well-known ports on your host:
 
 - 5432 for the "ext" postgres instance
 - 5434 for the "conf" postgres instnce
 - 6379 for redis
 
-This means that those ports must be free when running `docker compose up`, and that only one instance of this docker compose project can be running at one time on one host.
+This means that those ports must be free before running `docker compose up`. If you have local postgres or redis instances running already, there will be conflicts.
 
 The "ext" and "conf" database instances are encapsulated in the "ext" and "conf" folders. Within each, the "scripts" folder is mounted to your host, so that you can modify scripts at will and manipulate files in that directory.
 
