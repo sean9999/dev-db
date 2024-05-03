@@ -1,3 +1,6 @@
+> [!WARNING]  
+> In active developement. Unstable. Your mileage may vary
+
 # Local DB
 
 This project is designed to make it easy to work with local copies of Hard Rock / WGames databases. Such as:
