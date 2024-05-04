@@ -72,22 +72,6 @@ Note the subtle difference: "ext" uses the standard `5432` port. "conf" uses `54
 
 so far, no pre-seeding is done with redis. It's good to go.
 
-# Local DB
-
-This project is designed to make it easy to work with local copies of Hard Rock / WGames databases. Such as:
-
-- The "ext" database
-- The "conf" database
-- Redis
-
-It makes it easy to pull down data so your local db is like remote.
-
-This might become part of an effort to make every go service easy to run by doing so:
-
-```sh
-$ go run .
-```
-
 
 # Basic Architecture
 
