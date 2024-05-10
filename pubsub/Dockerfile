@@ -1,0 +1,2 @@
+FROM knarz/pubsub-emulator
+
